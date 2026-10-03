@@ -56,6 +56,48 @@ struct JUCE_API  HostedAudioProcessorParameter : public AudioProcessorParameter
         suitable for storing/recalling automation data.
     */
     virtual String getParameterID() const = 0;
+
+    /** The range of the values this parameter takes, in the units the plugin
+        itself publishes, when its format provides one.
+
+        getValue() and setValue() always work in a normalised 0..1 range, no
+        matter what the plugin does internally. Plugins that declare their own
+        units — Hz, dB, seconds, and so on — publish a range too, and this is
+        it: the normalised domain covers exactly this range.
+
+        To present or accept a value in the plugin's units, convert it:
+
+            auto native = param.convertFrom0to1 (param.getValue());        // show
+            param.setValueNotifyingHost (param.convertTo0to1 (native));    // set
+
+        getText() and getValueForText() stay in the normalised domain, so
+        convert around them in the same way.
+
+        The default implementation returns the identity range, 0..1, so a
+        format that publishes nothing is unaffected — its normalised domain is
+        also its value domain.
+
+        @see convertTo0to1, convertFrom0to1
+    */
+    virtual const NormalisableRange<float>& getNormalisableRange() const
+    {
+        static const NormalisableRange<float> identity;
+        return identity;
+    }
+
+    /** Normalises and snaps a value based on the normalisable range. */
+    float convertTo0to1 (float v) const noexcept
+    {
+        const auto& range = getNormalisableRange();
+        return range.convertTo0to1 (range.snapToLegalValue (v));
+    }
+
+    /** Denormalises and snaps a value based on the normalisable range. */
+    float convertFrom0to1 (float v) const noexcept
+    {
+        const auto& range = getNormalisableRange();
+        return range.snapToLegalValue (range.convertFrom0to1 (jlimit (0.0f, 1.0f, v)));
+    }
 };
 
 } // namespace juce

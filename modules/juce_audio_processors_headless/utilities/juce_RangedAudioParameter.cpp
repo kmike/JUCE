@@ -45,16 +45,4 @@ int RangedAudioParameter::getNumSteps() const
     return getDefaultNumParameterSteps();
 }
 
-float RangedAudioParameter::convertTo0to1 (float v) const noexcept
-{
-    const auto& range = getNormalisableRange();
-    return range.convertTo0to1 (range.snapToLegalValue (v));
-}
-
-float RangedAudioParameter::convertFrom0to1 (float v) const noexcept
-{
-    const auto& range = getNormalisableRange();
-    return range.snapToLegalValue (range.convertFrom0to1 (jlimit (0.0f, 1.0f, v)));
-}
-
 } // namespace juce

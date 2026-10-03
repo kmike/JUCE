@@ -655,6 +655,8 @@ public:
               minValue (minParameterValue),
               maxValue (maxParameterValue),
               range (maxValue - minValue),
+              valueRange (makeValueRange (minParameterValue, maxParameterValue,
+                                          parameterIsDiscrete, numParameterSteps)),
               automatable (parameterIsAutomatable),
               discrete (parameterIsDiscrete),
               numSteps (numParameterSteps),
@@ -713,6 +715,11 @@ public:
         float getDefaultValue() const override
         {
             return defaultValue;
+        }
+
+        const NormalisableRange<float>& getNormalisableRange() const override
+        {
+            return valueRange;
         }
 
         String getName (int /*maximumStringLength*/) const override { return name; }
@@ -864,10 +871,29 @@ public:
             return result;
         }
 
+        // The parameter's own range, as AudioUnitParameterInfo declares it. A
+        // discrete parameter snaps onto the same grid getNumSteps() reports; a
+        // range that makes no sense (min >= max) falls back to the identity.
+        static NormalisableRange<float> makeValueRange (AudioUnitParameterValue min,
+                                                       AudioUnitParameterValue max,
+                                                       bool isDiscrete,
+                                                       int numSteps)
+        {
+            if (max <= min)
+                return {};
+
+            const auto interval = (isDiscrete && numSteps >= 2)
+                                      ? (max - min) / (float) (numSteps - 1)
+                                      : 0.0f;
+
+            return { (float) min, (float) max, interval };
+        }
+
         AudioUnitPluginInstanceHeadless& pluginInstance;
         const UInt32 paramID;
         String name;
         const AudioUnitParameterValue minValue, maxValue, range;
+        const NormalisableRange<float> valueRange;
         const bool automatable, discrete;
         const int numSteps;
         const bool valuesHaveStrings, isSwitch;
@@ -1975,6 +2001,13 @@ private:
         }
 
         float getDefaultValue() const override                              { return 0.0f; }
+
+        const NormalisableRange<float>& getNormalisableRange() const override
+        {
+            static const NormalisableRange<float> booleanRange { 0.0f, 1.0f, 1.0f };
+            return booleanRange;
+        }
+
         String getName (int /*maximumStringLength*/) const override         { return "Bypass"; }
         String getText (float value, int) const override                    { return (value != 0.0f ? TRANS ("On") : TRANS ("Off")); }
         bool isAutomatable() const override                                 { return true; }
