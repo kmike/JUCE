@@ -111,7 +111,7 @@ public:
     using AudioProcessorParameterWithID::AudioProcessorParameterWithID;
 
     /** Returns the range of values that the parameter can take. */
-    virtual const NormalisableRange<float>& getNormalisableRange() const = 0;
+    virtual const NormalisableRange<float>& getNormalisableRange() const override = 0;
 
     /** Returns the number of steps for this parameter based on the normalisable range's interval.
         If you are using lambda functions to define the normalisable range's snapping behaviour
@@ -119,11 +119,8 @@ public:
     */
     int getNumSteps() const override;
 
-    /** Normalises and snaps a value based on the normalisable range. */
-    float convertTo0to1 (float v) const noexcept;
-
-    /** Denormalises and snaps a value based on the normalisable range. */
-    float convertFrom0to1 (float v) const noexcept;
+    // convertTo0to1() and convertFrom0to1() are inherited from
+    // HostedAudioProcessorParameter.
 };
 
 } // namespace juce
